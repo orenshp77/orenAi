@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" role="document">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OREN AI - צ'אט בוט חכם בעברית מבית אורן שפייזר">
+    <meta name="theme-color" content="#7c3aed">
+    <title>OREN AI - אורן שפייזר</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 420'%3E%3Cdefs%3E%3ClinearGradient id='rg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2347D6FF'/%3E%3Cstop offset='55%25' stop-color='%237A5CFF'/%3E%3Cstop offset='100%25' stop-color='%23FF4FD8'/%3E%3C/linearGradient%3E%3ClinearGradient id='tg' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2347D6FF'/%3E%3Cstop offset='100%25' stop-color='%238B5CFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='210' cy='210' r='150' fill='%23120022' opacity='0.95'/%3E%3Ccircle cx='210' cy='210' r='160' fill='none' stroke='url(%23rg)' stroke-width='12'/%3E%3Ctext x='210' y='235' text-anchor='middle' font-size='64' font-weight='800' font-family='Arial' fill='url(%23tg)'%3EOREN AI%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+    <!-- Animated Background - decorative only -->
+    <div class="background-container" aria-hidden="true" role="presentation">
+        <!-- Full Width Background Slideshow -->
+        <div class="background-slideshow" id="backgroundSlideshow">
+            <div class="slide slide-1 active"></div>
+            <div class="slide slide-2"></div>
+            <div class="slide slide-3"></div>
+            <div class="slide slide-4"></div>
+            <div class="slide slide-5"></div>
+            <div class="slide slide-6"></div>
+        </div>
+        <div class="slideshow-overlay"></div>
+
+        <div class="gradient-bg"></div>
+        <div class="particles" id="particles"></div>
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+            <div class="shape shape-6"></div>
+        </div>
+        <div class="aurora"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <div class="header-content">
+                <div class="header-actions">
+                    <button class="btn-icon" id="themeBtn" title="הצג נופים" aria-label="החלף רקע בין נופים לסגול" role="switch" aria-checked="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="newChatBtn" title="שיחה חדשה" aria-label="התחל שיחה חדשה">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="logo-section">
+                    <!-- OREN AI Text Logo -->
+                    <h1 class="header-logo-text" aria-label="אורן AI">OREN AI</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <main class="chat-container" role="main" aria-label="אזור הצ'אט">
+            <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="היסטוריית הודעות">
+                <!-- Welcome Message -->
+                <div class="welcome-section" id="welcomeSection" role="region" aria-labelledby="welcomeTitle">
+                    <div class="oren-logo-container" aria-hidden="true">
+                        <div class="oren-orbit-ring">
+                            <div class="oren-particle"></div>
+                            <div class="oren-particle"></div>
+                            <div class="oren-particle"></div>
+                        </div>
+                        <div class="oren-center">O</div>
+                    </div>
+                    <h2 class="welcome-title" id="welcomeTitle">
+                        <span class="greeting-text">נעים מאוד!</span>
+                        <span class="name-text">קוראים לי <span class="highlight">אורן שפייזר</span></span>
+                    </h2>
+                    <p class="welcome-subtitle">איך אוכל לעזור לך היום?</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-container" role="form" aria-label="טופס שליחת הודעה">
+                <div class="input-wrapper">
+                    <div class="input-glow" aria-hidden="true"></div>
+                    <label for="userInput" class="sr-only">כתוב הודעה לאורן</label>
+                    <textarea
+                        id="userInput"
+                        placeholder="שאל אותי משהו..."
+                        rows="1"
+                        autofocus
+                        aria-label="כתוב הודעה"
+                        aria-describedby="inputHint"
+                        autocomplete="off"
+                        spellcheck="true"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" disabled aria-label="שלח הודעה" aria-disabled="true" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M22 2L11 13"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                        </svg>
+                        <div class="send-ripple" aria-hidden="true"></div>
+                    </button>
+                </div>
+                <p class="input-hint" id="inputHint">
+                    <span class="hint-icon" aria-hidden="true">⚡</span>
+                    מופעל ע"י OREN AI
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="assertive" aria-busy="true" aria-label="טוען תשובה">
+        <div class="loading-content">
+            <div class="loading-spinner" aria-hidden="true">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">אורן חושב...</p>
+        </div>
+    </div>
+
+    <!-- Screen reader announcements -->
+    <div id="srAnnouncements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Skip to content link for keyboard users -->
+    <a href="#userInput" class="skip-link">דלג לתוכן הראשי</a>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
