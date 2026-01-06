@@ -1286,15 +1286,15 @@ body.theme-landscape .aurora {
     }
 
     .greeting-text {
-        font-size: 1.5rem;
+        font-size: 1.65rem;
     }
 
     .name-text {
-        font-size: 1.75rem;
+        font-size: 1.93rem;
     }
 
     .welcome-subtitle {
-        font-size: 1.15rem;
+        font-size: 1.27rem;
     }
 
     .suggestion-cards {
@@ -1406,15 +1406,15 @@ body.theme-landscape .aurora {
     }
 
     .greeting-text {
-        font-size: 1.4rem;
+        font-size: 1.54rem;
     }
 
     .name-text {
-        font-size: 1.6rem;
+        font-size: 1.76rem;
     }
 
     .welcome-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.21rem;
         margin-bottom: var(--space-xl);
     }
 
