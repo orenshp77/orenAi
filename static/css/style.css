@@ -1283,15 +1283,15 @@ body.theme-landscape .aurora {
     }
 
     .greeting-text {
-        font-size: 1.25rem;
-    }
-
-    .name-text {
         font-size: 1.5rem;
     }
 
+    .name-text {
+        font-size: 1.75rem;
+    }
+
     .welcome-subtitle {
-        font-size: 1rem;
+        font-size: 1.15rem;
     }
 
     .suggestion-cards {
@@ -1317,7 +1317,7 @@ body.theme-landscape .aurora {
     .message-content {
         max-width: 85%;
         padding: var(--space-sm) var(--space-md);
-        font-size: 0.95rem;
+        font-size: 1.05rem;
     }
 
     .input-wrapper {
@@ -1403,20 +1403,20 @@ body.theme-landscape .aurora {
     }
 
     .greeting-text {
-        font-size: 1.1rem;
+        font-size: 1.4rem;
     }
 
     .name-text {
-        font-size: 1.3rem;
+        font-size: 1.6rem;
     }
 
     .welcome-subtitle {
-        font-size: 0.9rem;
+        font-size: 1.1rem;
         margin-bottom: var(--space-xl);
     }
 
     .suggestion-card {
-        font-size: 0.85rem;
+        font-size: 1rem;
     }
 
     .card-icon {
@@ -1425,6 +1425,7 @@ body.theme-landscape .aurora {
 
     .message-content {
         max-width: 90%;
+        font-size: 1.05rem;
     }
 }
 
