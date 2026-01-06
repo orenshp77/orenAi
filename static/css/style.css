@@ -1078,11 +1078,14 @@ body.theme-landscape .aurora {
     outline: none;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 1.1rem;
     padding: var(--space-sm) var(--space-md);
+    padding-top: calc(var(--space-sm) - 2px);
     resize: none;
     max-height: 150px;
     line-height: 1.5;
+    display: flex;
+    align-items: center;
 }
 
 #userInput::placeholder {
