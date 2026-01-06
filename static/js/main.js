@@ -260,11 +260,13 @@ function scrollToBottom() {
 // Scroll to message top (for AI responses)
 function scrollToMessageTop(messageElement) {
     if (messageElement) {
-        const messageTop = messageElement.offsetTop - 20; // 20px padding from top
-        chatMessages.scrollTo({
-            top: messageTop,
-            behavior: 'smooth'
-        });
+        // Use setTimeout to ensure DOM is fully rendered
+        setTimeout(() => {
+            messageElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 100);
     }
 }
 
