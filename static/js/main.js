@@ -122,10 +122,19 @@ function initParticles() {
     }
 }
 
-// Auto-resize textarea
+// Auto-resize textarea (ChatGPT style)
 function autoResize() {
     userInput.style.height = 'auto';
-    userInput.style.height = Math.min(userInput.scrollHeight, 150) + 'px';
+    const maxHeight = 200;
+    const newHeight = Math.min(userInput.scrollHeight, maxHeight);
+    userInput.style.height = newHeight + 'px';
+
+    // Show scrollbar only when content exceeds max height
+    if (userInput.scrollHeight > maxHeight) {
+        userInput.style.overflowY = 'auto';
+    } else {
+        userInput.style.overflowY = 'hidden';
+    }
 }
 
 // Update send button state
@@ -257,15 +266,28 @@ function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Scroll to message top (for AI responses)
+// Scroll to show both question and answer (for AI responses)
 function scrollToMessageTop(messageElement) {
     if (messageElement) {
         // Use setTimeout to ensure DOM is fully rendered
         setTimeout(() => {
-            messageElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+            // Find the previous message (user's question)
+            const previousMessage = messageElement.previousElementSibling;
+
+            // If there's a previous message (the question), scroll to it
+            // This way both question and answer will be visible
+            if (previousMessage && previousMessage.classList.contains('message')) {
+                previousMessage.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            } else {
+                // Fallback to scrolling to the AI message itself
+                messageElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }, 100);
     }
 }
@@ -312,7 +334,13 @@ async function sendMessage() {
             addMessage(data.response, false);
             announceToSR('אורן ענה לשאלה שלך');
         } else if (data.error) {
-            addMessage('שגיאה: ' + data.error, false);
+            // Check if it's a quota/rate limit error
+            const errorStr = data.error.toLowerCase();
+            if (errorStr.includes('quota') || errorStr.includes('resource_exhausted') || errorStr.includes('rate') || errorStr.includes('limit') || errorStr.includes('429')) {
+                addMessage('מסלול התשובות חסום זמנית 🔄\nנסה שוב בעוד מספר דקות.', false);
+            } else {
+                addMessage('אופס! משהו השתבש. נסה שוב בבקשה.', false);
+            }
             announceToSR('אירעה שגיאה');
         } else {
             addMessage('מצטער, לא קיבלתי תשובה. נסה שוב.', false);

@@ -44,7 +44,7 @@ def chat():
 
         # Generate response using new API
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=full_message
         )
 
@@ -75,7 +75,7 @@ def chat_stream():
 
                 # Stream response using new API
                 for chunk in client.models.generate_content_stream(
-                    model='gemini-2.5-flash',
+                    model='gemini-2.0-flash',
                     contents=full_message
                 ):
                     if chunk.text:
