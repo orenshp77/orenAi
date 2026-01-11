@@ -32,9 +32,13 @@ def index():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    print(f"=== CHAT REQUEST RECEIVED ===")
+    print(f"API Key configured: {bool(GEMINI_API_KEY and GEMINI_API_KEY != 'YOUR_API_KEY_HERE')}")
+    print(f"API Key starts with: {GEMINI_API_KEY[:10]}..." if GEMINI_API_KEY else "NO KEY")
     try:
         data = request.json
         user_message = data.get('message', '')
+        print(f"User message: {user_message[:50]}...")
 
         if not user_message:
             return jsonify({'error': 'No message provided'}), 400
