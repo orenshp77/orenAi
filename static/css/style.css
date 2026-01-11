@@ -1027,16 +1027,6 @@ body.theme-landscape .aurora {
     30% { transform: translateY(-10px); }
 }
 
-/* Countdown Timer */
-.countdown-timer {
-    display: inline-block;
-    font-weight: 700;
-    color: var(--accent-light);
-    font-size: 1.1em;
-    min-width: 2ch;
-    text-align: center;
-}
-
 /* ============================================
    Input Container
    ============================================ */

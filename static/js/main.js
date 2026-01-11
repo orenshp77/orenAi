@@ -30,7 +30,7 @@ let sessionId = generateSessionId();
 let isProcessing = false;
 let currentSlide = 0;
 let isLandscapeTheme = true; // Default to landscape
-let cooldownTimer = null; // Timer for quota cooldown
+// Removed cooldown timer - no longer needed
 
 // Generate unique session ID
 function generateSessionId() {
@@ -267,7 +267,7 @@ function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Add quota error message with countdown timer
+// Add quota error message (payment plan required)
 function addQuotaErrorMessage() {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message assistant';
@@ -291,39 +291,12 @@ function addQuotaErrorMessage() {
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
 
-    // Start countdown from 60 seconds
-    let seconds = 60;
-    const timerId = 'timer_' + Date.now();
-
-    contentDiv.innerHTML = `<p>השירות עמוס כרגע ⏳<br>אפשר לנסות שוב בעוד <span id="${timerId}" class="countdown-timer">${seconds}</span> שניות</p>`;
+    contentDiv.innerHTML = `<p>כדי להמשיך לתת מענה לשאלות, תשנה למסלול תשלום...!</p>`;
 
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(contentDiv);
     chatMessages.appendChild(messageDiv);
     scrollToMessageTop(messageDiv);
-
-    // Clear any existing timer
-    if (cooldownTimer) {
-        clearInterval(cooldownTimer);
-    }
-
-    // Start countdown
-    cooldownTimer = setInterval(() => {
-        seconds--;
-        const timerElement = document.getElementById(timerId);
-        if (timerElement) {
-            if (seconds > 0) {
-                timerElement.textContent = seconds;
-            } else {
-                timerElement.parentElement.innerHTML = 'אפשר לנסות שוב עכשיו! ✨';
-                clearInterval(cooldownTimer);
-                cooldownTimer = null;
-            }
-        } else {
-            clearInterval(cooldownTimer);
-            cooldownTimer = null;
-        }
-    }, 1000);
 }
 
 // Scroll to show both question and answer (for AI responses)
