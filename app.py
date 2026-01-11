@@ -1,11 +1,11 @@
 """
-OREN AI Chat - Powered by Gemini
+OREN AI Chat - Powered by Groq
 Created by Maor Shpiezer
 """
 
 from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
-from google import genai
+from groq import Groq
 import os
 from dotenv import load_dotenv
 import json
@@ -15,9 +15,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configure Gemini API
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'YOUR_API_KEY_HERE')
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Configure Groq API
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', 'YOUR_API_KEY_HERE')
+client = Groq(api_key=GROQ_API_KEY)
 
 # System prompt for OREN personality
 OREN_SYSTEM_PROMPT = """אתה אורן שפייזר, עוזר AI חכם וידידותי.
@@ -33,8 +33,8 @@ def index():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     print(f"=== CHAT REQUEST RECEIVED ===")
-    print(f"API Key configured: {bool(GEMINI_API_KEY and GEMINI_API_KEY != 'YOUR_API_KEY_HERE')}")
-    print(f"API Key starts with: {GEMINI_API_KEY[:10]}..." if GEMINI_API_KEY else "NO KEY")
+    print(f"API Key configured: {bool(GROQ_API_KEY and GROQ_API_KEY != 'YOUR_API_KEY_HERE')}")
+    print(f"API Key starts with: {GROQ_API_KEY[:10]}..." if GROQ_API_KEY else "NO KEY")
     try:
         data = request.json
         user_message = data.get('message', '')
@@ -43,17 +43,19 @@ def chat():
         if not user_message:
             return jsonify({'error': 'No message provided'}), 400
 
-        # Add system context
-        full_message = f"{OREN_SYSTEM_PROMPT}\n\nUser: {user_message}"
-
-        # Generate response using new API
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=full_message
+        # Generate response using Groq
+        response = client.chat.completions.create(
+            model='llama-3.3-70b-versatile',
+            messages=[
+                {"role": "system", "content": OREN_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7,
+            max_tokens=2048
         )
 
         return jsonify({
-            'response': response.text,
+            'response': response.choices[0].message.content,
             'status': 'success'
         })
 
@@ -63,14 +65,14 @@ def chat():
 
         # Detailed logging
         print(f"="*50)
-        print(f"GEMINI ERROR:")
+        print(f"GROQ ERROR:")
         print(f"  Type: {error_type}")
         print(f"  Message: {e}")
         print(f"  Full error: {repr(e)}")
         print(f"="*50)
 
         # Check if it's a quota/rate limit error
-        if 'quota' in error_str or 'resource_exhausted' in error_str or '429' in error_str or 'too many' in error_str:
+        if 'quota' in error_str or 'rate_limit' in error_str or '429' in error_str or 'too many' in error_str:
             return jsonify({
                 'error': 'quota_exceeded',
                 'status': 'error'
@@ -94,15 +96,21 @@ def chat_stream():
 
         def generate():
             try:
-                full_message = f"{OREN_SYSTEM_PROMPT}\n\nUser: {user_message}"
+                # Stream response using Groq
+                stream = client.chat.completions.create(
+                    model='llama-3.3-70b-versatile',
+                    messages=[
+                        {"role": "system", "content": OREN_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_message}
+                    ],
+                    temperature=0.7,
+                    max_tokens=2048,
+                    stream=True
+                )
 
-                # Stream response using new API
-                for chunk in client.models.generate_content_stream(
-                    model='gemini-2.0-flash',
-                    contents=full_message
-                ):
-                    if chunk.text:
-                        yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        yield f"data: {json.dumps({'text': chunk.choices[0].delta.content})}\n\n"
 
                 yield f"data: {json.dumps({'done': True})}\n\n"
 
