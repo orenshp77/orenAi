@@ -54,10 +54,19 @@ def chat():
         })
 
     except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'status': 'error'
-        }), 500
+        error_str = str(e).lower()
+        # Check if it's a quota/rate limit error
+        if 'quota' in error_str or 'resource_exhausted' in error_str or '429' in error_str:
+            return jsonify({
+                'error': 'quota_exceeded',
+                'status': 'error'
+            }), 429
+        else:
+            print(f"Gemini API Error: {e}")  # Log for debugging
+            return jsonify({
+                'error': str(e),
+                'status': 'error'
+            }), 500
 
 @app.route('/api/chat/stream', methods=['POST'])
 def chat_stream():

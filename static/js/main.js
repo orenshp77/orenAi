@@ -368,10 +368,11 @@ async function sendMessage() {
             announceToSR('אורן ענה לשאלה שלך');
         } else if (data.error) {
             // Check if it's a quota/rate limit error
-            const errorStr = data.error.toLowerCase();
-            if (errorStr.includes('quota') || errorStr.includes('resource_exhausted') || errorStr.includes('rate') || errorStr.includes('limit') || errorStr.includes('429')) {
+            if (data.error === 'quota_exceeded') {
                 addQuotaErrorMessage();
             } else {
+                // Other errors - show generic message
+                console.error('API Error:', data.error);
                 addMessage('אופס! משהו השתבש. נסה שוב בבקשה.', false);
             }
             announceToSR('אירעה שגיאה');
