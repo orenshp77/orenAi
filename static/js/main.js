@@ -267,37 +267,6 @@ function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Add quota error message (payment plan required)
-function addQuotaErrorMessage() {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message assistant';
-    messageDiv.setAttribute('role', 'article');
-    messageDiv.setAttribute('aria-label', 'תשובת אורן');
-
-    const avatar = document.createElement('div');
-    avatar.className = 'message-avatar';
-    avatar.setAttribute('aria-hidden', 'true');
-    avatar.innerHTML = `
-        <div class="mini-oren-logo">
-            <div class="mini-orbit-ring">
-                <div class="mini-particle"></div>
-                <div class="mini-particle"></div>
-                <div class="mini-particle"></div>
-            </div>
-            <span class="mini-center">O</span>
-        </div>
-    `;
-
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-
-    contentDiv.innerHTML = `<p>כדי להמשיך לתת מענה לשאלות, תשנה למסלול תשלום...!</p>`;
-
-    messageDiv.appendChild(avatar);
-    messageDiv.appendChild(contentDiv);
-    chatMessages.appendChild(messageDiv);
-    scrollToMessageTop(messageDiv);
-}
 
 // Scroll to show both question and answer (for AI responses)
 function scrollToMessageTop(messageElement) {
@@ -367,14 +336,8 @@ async function sendMessage() {
             addMessage(data.response, false);
             announceToSR('אורן ענה לשאלה שלך');
         } else if (data.error) {
-            // Check if it's a quota/rate limit error
-            if (data.error === 'quota_exceeded') {
-                addQuotaErrorMessage();
-            } else {
-                // Other errors - show generic message
-                console.error('API Error:', data.error);
-                addMessage('אופס! משהו השתבש. נסה שוב בבקשה.', false);
-            }
+            console.error('API Error:', data.error);
+            addMessage('אופס! משהו השתבש. נסה שוב בבקשה.', false);
             announceToSR('אירעה שגיאה');
         } else {
             addMessage('מצטער, לא קיבלתי תשובה. נסה שוב.', false);
