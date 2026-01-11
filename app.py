@@ -55,16 +55,26 @@ def chat():
 
     except Exception as e:
         error_str = str(e).lower()
+        error_type = type(e).__name__
+
+        # Detailed logging
+        print(f"="*50)
+        print(f"GEMINI ERROR:")
+        print(f"  Type: {error_type}")
+        print(f"  Message: {e}")
+        print(f"  Full error: {repr(e)}")
+        print(f"="*50)
+
         # Check if it's a quota/rate limit error
-        if 'quota' in error_str or 'resource_exhausted' in error_str or '429' in error_str:
+        if 'quota' in error_str or 'resource_exhausted' in error_str or '429' in error_str or 'too many' in error_str:
             return jsonify({
                 'error': 'quota_exceeded',
                 'status': 'error'
             }), 429
         else:
-            print(f"Gemini API Error: {e}")  # Log for debugging
             return jsonify({
                 'error': str(e),
+                'error_type': error_type,
                 'status': 'error'
             }), 500
 
