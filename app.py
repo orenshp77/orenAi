@@ -31,12 +31,13 @@ client = Groq(api_key=GROQ_API_KEY or 'missing')
 
 # Models offered in the UI (id -> label). Add new Groq-hosted models here.
 MODELS = {
-    'llama-3.3-70b-versatile': 'Llama 3.3 70B',
-    'llama-3.1-8b-instant': 'Llama 3.1 8B (מהיר)',
+    'openai/gpt-oss-120b': 'GPT-OSS 120B',
+    'openai/gpt-oss-20b': 'GPT-OSS 20B (מהיר)',
+    'qwen/qwen3.8-27b': 'Qwen 3.8 27B',
 }
-DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')
 if DEFAULT_MODEL not in MODELS:
-    DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+    DEFAULT_MODEL = 'openai/gpt-oss-120b'
 
 MAX_MESSAGE_CHARS = 4000
 MAX_HISTORY_MESSAGES = 20
@@ -109,7 +110,7 @@ def chat():
             model=model,
             messages=messages,
             temperature=0.7,
-            max_tokens=2048
+            max_tokens=4096
         )
         return jsonify({
             'response': response.choices[0].message.content,
