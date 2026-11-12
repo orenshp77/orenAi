@@ -296,12 +296,12 @@ function formatMessage(text) {
 
         if (line.trim() === '') { i++; continue; }
 
-        if (/^ \d+ $/.test(line.trim())) { out.push(line.trim()); i++; continue; }
+        if (/^\u0000\d+\u0000$/.test(line.trim())) { out.push(line.trim()); i++; continue; }
 
         // Paragraph: consecutive plain lines
         const para = [];
         while (i < lines.length && lines[i].trim() !== '' && !isRow(lines[i]) &&
-               !/^ \d+ $/.test(lines[i].trim()) &&
+               !/^\u0000\d+\u0000$/.test(lines[i].trim()) &&
                !/^(#{1,4})\s+/.test(lines[i]) && !/^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) {
             para.push(inlineFormat(lines[i])); i++;
         }
