@@ -3,134 +3,135 @@ OREN AI Chat - Powered by Groq
 Created by Maor Shpiezer
 """
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from groq import Groq
 import os
+import time
+import logging
+from collections import defaultdict, deque
 from dotenv import load_dotenv
-import json
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger("oren")
+
 app = Flask(__name__)
-CORS(app)
 
-# Configure Groq API
-GROQ_API_KEY = os.getenv('GROQ_API_KEY', 'YOUR_API_KEY_HERE')
-client = Groq(api_key=GROQ_API_KEY)
+# CORS: only the allowed origins (comma separated in ALLOWED_ORIGINS)
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv(
+    'ALLOWED_ORIGINS', 'https://orenai.onrender.com').split(',') if o.strip()]
+CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
 
-# System prompt for OREN personality
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+if not GROQ_API_KEY:
+    log.warning("GROQ_API_KEY is not set - chat requests will fail")
+client = Groq(api_key=GROQ_API_KEY or 'missing')
+
+# Models offered in the UI (id -> label). Add new Groq-hosted models here.
+MODELS = {
+    'llama-3.3-70b-versatile': 'Llama 3.3 70B',
+    'llama-3.1-8b-instant': 'Llama 3.1 8B (מהיר)',
+}
+DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+if DEFAULT_MODEL not in MODELS:
+    DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+
+MAX_MESSAGE_CHARS = 4000
+MAX_HISTORY_MESSAGES = 20
+
+# Simple in-memory rate limit: N requests per window per IP
+RATE_LIMIT = int(os.getenv('RATE_LIMIT', '20'))
+RATE_WINDOW = 60
+_hits = defaultdict(deque)
+
 OREN_SYSTEM_PROMPT = """אתה אורן שפייזר, עוזר AI חכם וידידותי.
 אתה עונה בעברית בצורה חמה ומקצועית.
 אתה אוהב לעזור ותמיד מנסה לתת תשובות מפורטות ומועילות.
 כשמתאים, אתה משתמש באימוג'ים כדי להפוך את השיחה לנעימה יותר.
 """
 
+
+def rate_limited(ip):
+    now = time.time()
+    q = _hits[ip]
+    while q and now - q[0] > RATE_WINDOW:
+        q.popleft()
+    if len(q) >= RATE_LIMIT:
+        return True
+    q.append(now)
+    return False
+
+
+def clean_history(raw):
+    """Validate client-supplied history: only user/assistant roles, bounded size."""
+    out = []
+    if not isinstance(raw, list):
+        return out
+    for m in raw[-MAX_HISTORY_MESSAGES:]:
+        if not isinstance(m, dict):
+            continue
+        role, content = m.get('role'), m.get('content')
+        if role in ('user', 'assistant') and isinstance(content, str) and content.strip():
+            out.append({'role': role, 'content': content[:MAX_MESSAGE_CHARS]})
+    return out
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', models=MODELS, default_model=DEFAULT_MODEL)
+
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    print(f"=== CHAT REQUEST RECEIVED ===")
-    print(f"API Key configured: {bool(GROQ_API_KEY and GROQ_API_KEY != 'YOUR_API_KEY_HERE')}")
-    print(f"API Key starts with: {GROQ_API_KEY[:10]}..." if GROQ_API_KEY else "NO KEY")
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+    if rate_limited(ip):
+        return jsonify({'error': 'rate_limited', 'status': 'error'}), 429
+
+    data = request.get_json(silent=True) or {}
+    user_message = data.get('message')
+    if not isinstance(user_message, str) or not user_message.strip():
+        return jsonify({'error': 'No message provided', 'status': 'error'}), 400
+    if len(user_message) > MAX_MESSAGE_CHARS:
+        return jsonify({'error': 'message_too_long', 'status': 'error'}), 400
+
+    model = data.get('model')
+    if model not in MODELS:
+        model = DEFAULT_MODEL
+
+    messages = [{"role": "system", "content": OREN_SYSTEM_PROMPT}]
+    messages += clean_history(data.get('history'))
+    messages.append({"role": "user", "content": user_message})
+
     try:
-        data = request.json
-        user_message = data.get('message', '')
-        print(f"User message: {user_message[:50]}...")
-
-        if not user_message:
-            return jsonify({'error': 'No message provided'}), 400
-
-        # Generate response using Groq
         response = client.chat.completions.create(
-            model='llama-3.3-70b-versatile',
-            messages=[
-                {"role": "system", "content": OREN_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message}
-            ],
+            model=model,
+            messages=messages,
             temperature=0.7,
             max_tokens=2048
         )
-
         return jsonify({
             'response': response.choices[0].message.content,
             'status': 'success'
         })
-
     except Exception as e:
+        # Log details server-side only; never leak them to the client
+        log.error("Groq error (%s): %s", type(e).__name__, e)
         error_str = str(e).lower()
-        error_type = type(e).__name__
-
-        # Detailed logging
-        print(f"="*50)
-        print(f"GROQ ERROR:")
-        print(f"  Type: {error_type}")
-        print(f"  Message: {e}")
-        print(f"  Full error: {repr(e)}")
-        print(f"="*50)
-
-        # Check if it's a quota/rate limit error
         if 'quota' in error_str or 'rate_limit' in error_str or '429' in error_str or 'too many' in error_str:
-            return jsonify({
-                'error': 'quota_exceeded',
-                'status': 'error'
-            }), 429
-        else:
-            return jsonify({
-                'error': str(e),
-                'error_type': error_type,
-                'status': 'error'
-            }), 500
+            return jsonify({'error': 'quota_exceeded', 'status': 'error'}), 429
+        return jsonify({'error': 'server_error', 'status': 'error'}), 500
 
-@app.route('/api/chat/stream', methods=['POST'])
-def chat_stream():
-    """Streaming response for real-time typing effect"""
-    try:
-        data = request.json
-        user_message = data.get('message', '')
-
-        if not user_message:
-            return jsonify({'error': 'No message provided'}), 400
-
-        def generate():
-            try:
-                # Stream response using Groq
-                stream = client.chat.completions.create(
-                    model='llama-3.3-70b-versatile',
-                    messages=[
-                        {"role": "system", "content": OREN_SYSTEM_PROMPT},
-                        {"role": "user", "content": user_message}
-                    ],
-                    temperature=0.7,
-                    max_tokens=2048,
-                    stream=True
-                )
-
-                for chunk in stream:
-                    if chunk.choices[0].delta.content:
-                        yield f"data: {json.dumps({'text': chunk.choices[0].delta.content})}\n\n"
-
-                yield f"data: {json.dumps({'done': True})}\n\n"
-
-            except Exception as e:
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-        return Response(generate(), mimetype='text/event-stream')
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/clear', methods=['POST'])
 def clear_chat():
-    """Clear chat history"""
+    """History lives in the browser; nothing to clear server-side."""
     return jsonify({'status': 'cleared'})
 
+
 if __name__ == '__main__':
-    print("\n" + "="*50)
-    print("OREN AI Chat Server Starting...")
-    print("="*50)
-    print("Open http://localhost:500 in your browser")
-    print("="*50 + "\n")
-    app.run(debug=True, port=500, threaded=True)
+    port = int(os.getenv('PORT', '5000'))
+    debug = os.getenv('FLASK_DEBUG', '0') == '1'
+    print(f"OREN AI Chat running at http://localhost:{port}")
+    app.run(debug=debug, port=port, threaded=True)

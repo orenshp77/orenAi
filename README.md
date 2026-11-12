@@ -1,6 +1,6 @@
 # 🌟 OREN AI Chat
 
-צ'אט AI מרשים ומודרני מבוסס Gemini, נוצר על ידי מאור שפייזר.
+צ'אט AI מרשים ומודרני מבוסס Groq, נוצר על ידי מאור שפייזר.
 
 ![OREN AI](https://img.shields.io/badge/OREN-AI%20Chat-8b5cf6?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge)
@@ -49,7 +49,7 @@ copy .env.example .env
 ```
 3. ערוך את הקובץ והכנס את המפתח שלך:
 ```
-GEMINI_API_KEY=your_api_key_here
+GROQ_API_KEY=your_api_key_here
 ```
 
 ### 5. הפעלת השרת
@@ -78,11 +78,11 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
 ```
 3. חבר את ה-GitHub repo שלך
-4. הוסף את ה-GEMINI_API_KEY ב-Environment Variables
+4. הוסף את ה-GROQ_API_KEY ב-Environment Variables
 5. Deploy!
 
 ### אפשרות 2: Railway
@@ -130,7 +130,7 @@ OREN-AI-Chat/
 
 ---
 
-## 🔑 קבלת מפתח Gemini (חינם!)
+## 🔑 קבלת מפתח Groq (חינם!)
 
 1. היכנס ל-[Google AI Studio](https://makersuite.google.com/app/apikey)
 2. לחץ על "Get API Key"

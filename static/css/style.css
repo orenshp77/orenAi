@@ -1485,3 +1485,16 @@ body.theme-landscape .aurora {
         color: black !important;
     }
 }
+
+/* Model selector */
+.model-select {
+    background: rgba(255,255,255,0.12);
+    color: inherit;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.model-select option { color: #111; }

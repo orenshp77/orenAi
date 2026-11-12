@@ -26,16 +26,12 @@ function announceToSR(message) {
 }
 
 // State
-let sessionId = generateSessionId();
+let history = []; // conversation history sent to the server
+const modelSelect = document.getElementById('modelSelect');
 let isProcessing = false;
 let currentSlide = 0;
 let isLandscapeTheme = true; // Default to landscape
 // Removed cooldown timer - no longer needed
-
-// Generate unique session ID
-function generateSessionId() {
-    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
 
 // Initialize background slideshow - changes every 30 seconds
 function initSlideshow() {
@@ -323,7 +319,8 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 message: message,
-                session_id: sessionId
+                history: history,
+                model: modelSelect ? modelSelect.value : undefined
             })
         });
 
@@ -333,11 +330,19 @@ async function sendMessage() {
         removeTypingIndicator();
 
         if (data.status === 'success' && data.response) {
+            history.push({ role: 'user', content: message });
+            history.push({ role: 'assistant', content: data.response });
+            history = history.slice(-20);
             addMessage(data.response, false);
             announceToSR('אורן ענה לשאלה שלך');
         } else if (data.error) {
             console.error('API Error:', data.error);
-            addMessage('אופס! משהו השתבש. נסה שוב בבקשה.', false);
+            const msgs = {
+                rate_limited: 'שלחת יותר מדי הודעות. חכה רגע ונסה שוב.',
+                message_too_long: 'ההודעה ארוכה מדי. נסה לקצר אותה.',
+                quota_exceeded: 'המכסה הנוכחית הסתיימה. נסה שוב מאוחר יותר.'
+            };
+            addMessage(msgs[data.error] || 'אופס! משהו השתבש. נסה שוב בבקשה.', false);
             announceToSR('אירעה שגיאה');
         } else {
             addMessage('מצטער, לא קיבלתי תשובה. נסה שוב.', false);
@@ -382,21 +387,20 @@ async function newChat() {
     chatMessages.innerHTML = welcomeHTML;
     announceToSR('שיחה חדשה נפתחה');
 
-    // Clear server-side session
+    // Notify server (history is kept in the browser)
     try {
         await fetch('/api/clear', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ session_id: sessionId })
+            body: '{}'
         });
     } catch (error) {
         console.error('Error clearing session:', error);
     }
 
-    // Generate new session ID
-    sessionId = generateSessionId();
+    history = [];
 }
 
 // Event Listeners

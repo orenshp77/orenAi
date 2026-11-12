@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl" role="document">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,6 +61,12 @@
         <header class="header" role="banner">
             <div class="header-content">
                 <div class="header-actions">
+                    <label for="modelSelect" class="sr-only">בחר מודל</label>
+                    <select id="modelSelect" class="model-select" aria-label="בחר מודל">
+                        {% for id, label in models.items() %}
+                        <option value="{{ id }}" {% if id == default_model %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                     <button class="btn-icon" id="themeBtn" title="הצג נופים" aria-label="החלף רקע בין נופים לסגול" role="switch" aria-checked="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="12" cy="12" r="5"/>
