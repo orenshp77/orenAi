@@ -230,32 +230,85 @@ function removeTypingIndicator() {
     }
 }
 
-// Format message with markdown-like support
+// Inline formatting (input is already HTML-escaped)
+function inlineFormat(t) {
+    return t.replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+}
+
+// Format message with markdown support: code blocks, headings, lists, tables
 function formatMessage(text) {
     if (!text) return '<p></p>';
 
-    // Escape HTML
-    text = text.replace(/&/g, '&amp;')
-               .replace(/</g, '&lt;')
-               .replace(/>/g, '&gt;');
+    // Pull out code blocks first so they are not touched by other rules
+    const blocks = [];
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const esc = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        blocks.push(`<pre><code class="language-${lang}">${esc}</code></pre>`);
+        return `\u0000${blocks.length - 1}\u0000`;
+    });
 
-    // Code blocks
-    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // Inline code
-    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    const lines = text.split('\n');
+    const out = [];
+    let i = 0;
+    const isRow = l => /^\s*\|.*\|\s*$/.test(l);
+    const isSep = l => /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l) && l.includes('-');
+    const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => inlineFormat(c.trim()));
 
-    // Bold
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    while (i < lines.length) {
+        const line = lines[i];
 
-    // Italic
-    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        if (isRow(line) && i + 1 < lines.length && isSep(lines[i + 1])) {
+            const head = cells(line);
+            i += 2;
+            const rows = [];
+            while (i < lines.length && isRow(lines[i])) { rows.push(cells(lines[i])); i++; }
+            out.push('<div class="table-wrap"><table><thead><tr>' +
+                head.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' +
+                rows.map(r => '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') +
+                '</tbody></table></div>');
+            continue;
+        }
 
-    // Line breaks
-    text = text.replace(/\n/g, '<br>');
+        const h = line.match(/^(#{1,4})\s+(.*)$/);
+        if (h) { out.push(`<h4>${inlineFormat(h[2])}</h4>`); i++; continue; }
 
-    // Wrap in paragraph
-    return `<p>${text}</p>`;
+        if (/^\s*[-*•]\s+/.test(line)) {
+            const items = [];
+            while (i < lines.length && /^\s*[-*•]\s+/.test(lines[i])) {
+                items.push(`<li>${inlineFormat(lines[i].replace(/^\s*[-*•]\s+/, ''))}</li>`); i++;
+            }
+            out.push(`<ul>${items.join('')}</ul>`);
+            continue;
+        }
+
+        if (/^\s*\d+[.)]\s+/.test(line)) {
+            const items = [];
+            while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
+                items.push(`<li>${inlineFormat(lines[i].replace(/^\s*\d+[.)]\s+/, ''))}</li>`); i++;
+            }
+            out.push(`<ol>${items.join('')}</ol>`);
+            continue;
+        }
+
+        if (line.trim() === '') { i++; continue; }
+
+        if (/^ \d+ $/.test(line.trim())) { out.push(line.trim()); i++; continue; }
+
+        // Paragraph: consecutive plain lines
+        const para = [];
+        while (i < lines.length && lines[i].trim() !== '' && !isRow(lines[i]) &&
+               !/^ \d+ $/.test(lines[i].trim()) &&
+               !/^(#{1,4})\s+/.test(lines[i]) && !/^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) {
+            para.push(inlineFormat(lines[i])); i++;
+        }
+        out.push(`<p>${para.join('<br>')}</p>`);
+    }
+
+    return out.join('').replace(/\u0000(\d+)\u0000/g, (_, n) => blocks[+n]);
 }
 
 // Scroll chat to bottom
